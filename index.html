@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow"> 
+    <title>Monopoly Deal Scoreboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Anton&display=swap');
+
+        :root {
+            --bg-dark: #1e2749; 
+            --bg-card: #2a365f; 
+            --text-primary: #ffffff;
+            --text-secondary: #bdc3c7; 
+            --accent-green: #2ecc71; 
+            --accent-red: #e74c3c; 
+            --accent-yellow: #f1c40f; 
+            --accent-pink: #e91e63; 
+            --border-light: #4a588b;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-dark);
+            padding: 15px;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 500px; 
+        }
+
+        h1 {
+            font-family: 'Anton', sans-serif; 
+            color: var(--accent-yellow);
+            margin-bottom: 5px;
+            font-size: 42px; 
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+        }
+
+        .session-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            padding: 10px 0;
+            border-top: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border-light);
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item .value {
+            display: block;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+        .stat-item .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .stat-item .date-label {
+            font-size: 10px;
+            color: var(--accent-yellow);
+        }
+
+
+        #leader-section {
+            background-color: rgba(255,255,255,0.05);
+            border: 2px solid var(--accent-yellow);
+            color: var(--text-primary);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 17px;
+            font-weight: 600;
+        }
+        #leader-section.tie {
+            border-color: var(--accent-pink);
+        }
+         #leader-section .leader-name {
+            color: var(--accent-yellow);
+         }
+         #leader-section.tie .leader-name {
+            color: var(--accent-pink);
+         }
+
+
+        #scoreboard-loading {
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+
+        table#stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        #stats-table th, #stats-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+        }
+
+        #stats-table th {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            text-align: center; 
+        }
+        
+        #stats-table th.player-col-header { 
+            text-align: left; 
+        }
+
+        #stats-table td.player-avatar {
+            text-align: center; 
+        }
+
+        #stats-table td.player-name { 
+            text-align: left; 
+        }
+
+        #stats-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .player-avatar img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%; 
+            border: 2px solid var(--text-secondary);
+            object-fit: cover;
+            display: inline-block; 
+        }
+        .player-avatar.leader-avatar img {
+            border-color: var(--accent-yellow);
+        }
+       
+        #stats-table td.player-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .leader td.player-name { 
+            color: var(--accent-yellow);
+        }
+
+        .wins, .losses { 
+            font-weight: 700;
+            text-align: center; 
+            font-size: 16px;
+        }
+        .wins { color: var(--accent-green); }
+        .losses { color: var(--accent-red); }
+
+        .last-updated {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        button#refresh-button {
+            background: linear-gradient(145deg, var(--accent-red), #c0392b);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 3px 8px rgba(0,0,0, 0.3);
+            text-transform: uppercase;
+            margin-bottom: 20px; 
+        }
+        button#refresh-button:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 5px 12px rgba(0,0,0, 0.4);
+        }
+        button#refresh-button:active {
+            transform: translateY(1px);
+        }
+
+        .external-links {
+            margin-top: 10px; 
+            padding-top: 15px;
+            border-top: 1px solid var(--border-light);
+            font-size: 13px;
+        }
+        .external-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.2s ease;
+        }
+        .external-links a:hover {
+            color: var(--accent-yellow);
+            text-decoration: underline;
+        }
+
+        #stats-table.hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MONOPOLY DEAL</h1>
+        <p class="subtitle">Season Score Tracker</p>
+
+        <div class="session-stats">
+            <div class="stat-item">
+                <span class="value" id="games-this-season">0</span>
+                <span class="label">Games This Season</span>
+            </div>
+            <div class="stat-item">
+                <span class="value" id="games-last-session">0</span>
+                <span class="label">Last Session</span>
+                <span class="date-label" id="last-session-date">N/A</span>
+            </div>
+        </div>
+
+        <div id="leader-section">
+            <span id="leader-text">Calculating leader...</span>
+        </div>
+
+        <div id="scoreboard-loading">Loading scores...</div>
+        
+        <table id="stats-table" class="hidden">
+            <thead>
+                <tr>
+                    <th style="width: 50px;"></th> 
+                    <th class="player-col-header">Player</th> 
+                    <th>Wins</th> 
+                    <th>Losses</th> 
+                </tr>
+            </thead>
+            <tbody id="stats-body">
+            </tbody>
+        </table>
+
+        <p class="last-updated">Last updated: <span id="last-updated-time">Never</span></p>
+        <button id="refresh-button">Refresh Scores</button>
+
+        <div class="external-links">
+            <a href="https://forms.gle/DEk8WXwVcfqZEQTk6" target="_blank" rel="noopener noreferrer">Record a Win</a>
+            <a href="https://docs.google.com/spreadsheets/d/11IWHaWe49rVfHa6tAxco-A8DB-vfKd5rWwLx41Rvrmc/edit?usp=sharing" target="_blank" rel="noopener noreferrer">View Full Results</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // !!! IMPORTANT: Replace this URL with your actual published Google Sheet CSV URL !!!
+            const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRBEekFAsEf7j7uM_MwPexOhW0JAX5Gd1aPbfqN2o7Q6gxjI6zh10lAS-dh680u8SuomQlg2QgN6fnc/pub?gid=1534975081&single=true&output=csv';
+            
+            const playersData = {
+                "Tim": { 
+                    wins: 0, losses: 0, 
+                    avatar: "https://images-eds-ssl.xboxlive.com/image?url=z951ykn43p4FqWbbFvR2Ec.8vbDhj8G2Xe7JngaTToBrrCmIEEXHC9UNrdJ6P7KIFXxmxGDtE9Vkd62rOpb7JUF_ds7a.6n_aHDK7ZA3NbAgydB9_rsvYhVdPdDeJEA1&format=jpg&w=64&h=64"
+                },
+                "Andy": { 
+                    wins: 0, losses: 0, 
+                    avatar: "https://images-eds-ssl.xboxlive.com/image?url=7OTVnZUMVj4OV2zUUGecWvn3U00nQQLfK7_kwpANoggwaGbStT4l18klAG61OrxOrl_yuTLVnaUm1bje1rhcUiqWmeyNoHQiD.Frp5aF5rfPCoJq1jybdX0ApO1arTgkN61kv8EZhiM1FwY8fFpl51vzviLcsKhdiwcAfHGH8JY-&format=jpg&w=64&h=64"
+                },
+                "Matt": { 
+                    wins: 0, losses: 0, 
+                    avatar: "https://images-eds-ssl.xboxlive.com/image?url=wHwbXKif8cus8csoZ03RW8ke8ralOdP9BGd4wzwl0MKiS_22MVIPEwJP9TvepJ8uom_m4YHTAIth1DTzMclZ1sxl6NGrRI89xhmUw8tfnuU_3Qt5_q83QyGSiuSiK1BT2yAuFkwimgZy8TFcNvotd7kvVSa4x_MYqxnOhDIBuFggheSjcOnVvxiMu8_emk50&format=jpg&w=64&h=64"
+                }
+            };
+            const knownPlayerNames = Object.keys(playersData);
+
+            const leaderTextElem = document.getElementById('leader-text');
+            const leaderSectionElem = document.getElementById('leader-section');
+            const loadingMessageElem = document.getElementById('scoreboard-loading');
+            const statsTableElem = document.getElementById('stats-table');
+            const statsBodyElem = document.getElementById('stats-body');
+            const lastUpdatedTimeElem = document.getElementById('last-updated-time');
+            const refreshButton = document.getElementById('refresh-button');
+            const gamesThisSeasonElem = document.getElementById('games-this-season');
+            const gamesLastSessionElem = document.getElementById('games-last-session');
+            const lastSessionDateElem = document.getElementById('last-session-date');
+
+
+            function getLocalDateKey(dateObj) {
+                return dateObj.getFullYear() + '-' + 
+                       String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(dateObj.getDate()).padStart(2, '0');
+            }
+
+            async function fetchAndProcessScores() {
+                if (!sheetUrl || sheetUrl === 'YOUR_PUBLISHED_CSV_URL_FOR_FORM_RESPONSES_1_HERE') {
+                    loadingMessageElem.textContent = 'Error: Google Sheet URL not configured in script.js.';
+                    leaderTextElem.textContent = 'Configuration Needed';
+                    statsTableElem.classList.add('hidden'); 
+                    return;
+                }
+
+                loadingMessageElem.textContent = 'Fetching latest scores...';
+                loadingMessageElem.style.display = 'block';
+                statsTableElem.classList.add('hidden');
+                statsBodyElem.innerHTML = '';
+                leaderTextElem.textContent = 'Calculating...';
+                leaderSectionElem.className = '';
+
+                knownPlayerNames.forEach(name => {
+                    playersData[name].wins = 0;
+                    playersData[name].losses = 0;
+                });
+
+                try {
+                    const response = await fetch(sheetUrl + '&_=' + new Date().getTime());
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const csvData = await response.text();
+
+                    const rows = csvData.trim().split('\n');
+                    let totalGamesThisSeason = 0;
+                    const gamesByDate = {}; 
+
+                    if (rows.length > 1 || (rows.length === 1 && rows[0].trim() !== "Timestamp,Who Won?" && rows[0].trim() !== "") ) {
+                        for (let i = 1; i < rows.length; i++) { 
+                            if (rows[i].trim() === "") continue; 
+                            totalGamesThisSeason++;
+                            const cells = rows[i].split(',');
+                            if (cells.length < 2) continue; 
+
+                            const timestampStr = cells[0].trim();
+                            const winnerName = cells[1].trim();
+
+                            const gameDate = new Date(timestampStr);
+                            if (!isNaN(gameDate)) { 
+                                const dateKey = getLocalDateKey(gameDate);
+                                gamesByDate[dateKey] = (gamesByDate[dateKey] || 0) + 1;
+                            }
+
+                            const knownWinner = knownPlayerNames.find(p => p.toLowerCase() === winnerName.toLowerCase());
+                            if (knownWinner) {
+                                playersData[knownWinner].wins++;
+                            }
+                        }
+                    }
+                    
+                    knownPlayerNames.forEach(p => {
+                        playersData[p].losses = totalGamesThisSeason - playersData[p].wins;
+                    });
+
+                    gamesThisSeasonElem.textContent = totalGamesThisSeason;
+
+                    const todayKey = getLocalDateKey(new Date());
+                    const pastGameDates = Object.keys(gamesByDate)
+                        .filter(dateKey => dateKey !== todayKey)
+                        .sort((a, b) => new Date(b) - new Date(a)); 
+
+                    if (pastGameDates.length > 0) {
+                        const lastSessionDateKey = pastGameDates[0];
+                        gamesLastSessionElem.textContent = gamesByDate[lastSessionDateKey];
+                        const [year, month, day] = lastSessionDateKey.split('-');
+                        lastSessionDateElem.textContent = `${day}/${month}/${year}`; 
+                    } else {
+                        gamesLastSessionElem.textContent = '0';
+                        lastSessionDateElem.textContent = 'N/A';
+                    }
+
+                    let maxWins = -1;
+                    let leaders = [];
+                    if (totalGamesThisSeason > 0) {
+                        knownPlayerNames.forEach(p => {
+                            if (playersData[p].wins > maxWins) {
+                                maxWins = playersData[p].wins;
+                                leaders = [p];
+                            } else if (playersData[p].wins === maxWins && maxWins > 0) {
+                                leaders.push(p);
+                            }
+                        });
+                         if (maxWins === 0) leaders = [];
+                    }
+
+                    if (totalGamesThisSeason === 0) {
+                        leaderTextElem.textContent = "No games played this season!";
+                    } else if (leaders.length === 1) {
+                        leaderTextElem.innerHTML = `<span class="leader-name">${leaders[0]}</span> is leading! 🏆`;
+                    } else if (leaders.length > 1) {
+                        leaderTextElem.innerHTML = `Tie: <span class="leader-name">${leaders.join(' & ')}</span> 👑`;
+                        leaderSectionElem.classList.add('tie');
+                    } else { 
+                         leaderTextElem.textContent = "Waiting for a clear winner...";
+                    }
+
+                    const sortedPlayerNames = [...knownPlayerNames].sort((a,b) => playersData[b].wins - playersData[a].wins);
+
+                    sortedPlayerNames.forEach(playerName => {
+                        const stats = playersData[playerName];
+                        const tr = document.createElement('tr');
+                        if (leaders.includes(playerName) && stats.wins > 0) {
+                            tr.classList.add('leader');
+                        }
+
+                        const tdAvatar = document.createElement('td');
+                        tdAvatar.className = 'player-avatar';
+                        if (leaders.includes(playerName) && stats.wins > 0) {
+                            tdAvatar.classList.add('leader-avatar');
+                        }
+                        tdAvatar.innerHTML = `<img src="${stats.avatar}" alt="${playerName}">`;
+
+                        const tdPlayerName = document.createElement('td');
+                        tdPlayerName.className = 'player-name'; 
+                        tdPlayerName.textContent = playerName;
+                        
+                        const tdWins = document.createElement('td');
+                        tdWins.className = 'wins'; 
+                        tdWins.textContent = stats.wins;
+
+                        const tdLosses = document.createElement('td');
+                        tdLosses.className = 'losses'; 
+                        tdLosses.textContent = stats.losses;
+
+                        tr.appendChild(tdAvatar);
+                        tr.appendChild(tdPlayerName);
+                        tr.appendChild(tdWins);
+                        tr.appendChild(tdLosses);
+                        statsBodyElem.appendChild(tr);
+                    });
+
+                    loadingMessageElem.style.display = 'none';
+                    if (knownPlayerNames.length > 0) {
+                        statsTableElem.classList.remove('hidden');
+                    }
+                    lastUpdatedTimeElem.textContent = new Date().toLocaleTimeString();
+
+                } catch (error) {
+                    console.error('Error fetching or processing sheet data:', error);
+                    loadingMessageElem.textContent = 'Error loading scores. Please try again.';
+                    leaderTextElem.textContent = 'Error!';
+                    statsTableElem.classList.add('hidden');
+                }
+            }
+            
+            refreshButton.addEventListener('click', fetchAndProcessScores);
+            fetchAndProcessScores(); 
+        });
+    </script>
+</body>
+</html>
