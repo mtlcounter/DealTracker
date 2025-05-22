@@ -277,9 +277,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRBEekFAsEf7j7uM_MwPexOhW0JAX5Gd1aPbfqN2o7Q6gxjI6zh10lAS-dh680u8SuomQlg2QgN6fnc/pub?gid=1534975081&single=true&output=csv';
+            const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRBEekFAsEf7j7uM_MwPexOhW0JAX5Gd1aPbfqN2o7Q6gxjI6zh10lAS-dh680u8SuomQlg2QgN6fnc/pub?gid=1534975081&single=true&output=csv'; 
             
-            // --- Reverted playersData to use original names as keys ---
             const playersData = {
                 "Tim": { 
                     wins: 0, losses: 0, 
@@ -294,7 +293,7 @@
                     avatar: "https://images-eds-ssl.xboxlive.com/image?url=wHwbXKif8cus8csoZ03RW8ke8ralOdP9BGd4wzwl0MKiS_22MVIPEwJP9TvepJ8uom_m4YHTAIth1DTzMclZ1sxl6NGrRI89xhmUw8tfnuU_3Qt5_q83QyGSiuSiK1BT2yAuFkwimgZy8TFcNvotd7kvVSa4x_MYqxnOhDIBuFggheSjcOnVvxiMu8_emk50&format=jpg&w=64&h=64"
                 }
             };
-            const knownPlayerNames = Object.keys(playersData); // This will now be ["Tim", "Andy", "Matt"]
+            const knownPlayerNames = Object.keys(playersData);
 
             const leaderTextElem = document.getElementById('leader-text');
             const leaderSectionElem = document.getElementById('leader-section');
@@ -321,8 +320,8 @@
                         console.warn("Audio play failed:", error);
                     });
                 }
-
-                if (!sheetUrl || sheetUrl === 'YOUR_PUBLISHED_CSV_URL_FROM_PUBLIC_SCORES_SHEET_HERE') {
+                
+                if (!sheetUrl || sheetUrl === 'YOUR_PUBLISHED_CSV_URL_FROM_PUBLIC_SCORES_SHEET_HERE') { // Corrected this line
                     loadingMessageElem.textContent = 'Error: Google Sheet URL not configured in script.js.';
                     leaderTextElem.textContent = 'Configuration Needed';
                     statsTableElem.classList.add('hidden'); 
@@ -352,8 +351,6 @@
                     let totalGamesThisSeason = 0;
                     const gamesByDate = {}; 
 
-                    // Check if the CSV has more than just the header row ("Timestamp,Who Won?")
-                    // or if it's just one line but not the header (very unlikely for valid data).
                     if (rows.length > 1 || (rows.length === 1 && rows[0].trim().toLowerCase() !== "timestamp,who won?" && rows[0].trim() !== "") ) {
                         for (let i = 1; i < rows.length; i++) { 
                             if (rows[i].trim() === "") continue; 
@@ -362,20 +359,46 @@
                             if (cells.length < 2) continue; 
 
                             const timestampStr = cells[0].trim();
-                            const winnerName = cells[1].trim(); // This will be "Tim", "Andy", or "Matt"
+                            const winnerName = cells[1].trim();
 
-                            const gameDate = new Date(timestampStr);
+                            // --- CORRECTED DATE PARSING ---
+                            let gameDate;
+                            const dateTimeParts = timestampStr.split(' '); 
+                            const dateParts = dateTimeParts[0].split('/'); 
+                            
+                            if (dateParts.length === 3) {
+                                const day = parseInt(dateParts[0], 10);
+                                const month = parseInt(dateParts[1], 10) - 1; 
+                                const year = parseInt(dateParts[2], 10);
+
+                                if (dateTimeParts.length > 1) {
+                                    const timeParts = dateTimeParts[1].split(':'); 
+                                    if (timeParts.length === 3) {
+                                        const hours = parseInt(timeParts[0], 10);
+                                        const minutes = parseInt(timeParts[1], 10);
+                                        const seconds = parseInt(timeParts[2], 10);
+                                        gameDate = new Date(year, month, day, hours, minutes, seconds);
+                                    } else {
+                                        gameDate = new Date(year, month, day);
+                                    }
+                                } else {
+                                    gameDate = new Date(year, month, day);
+                                }
+                            } else {
+                                console.warn("Unexpected date format in CSV:", timestampStr);
+                                gameDate = new Date(timestampStr); 
+                            }
+                            // --- END CORRECTED DATE PARSING ---
+
                             if (!isNaN(gameDate)) { 
                                 const dateKey = getLocalDateKey(gameDate);
                                 gamesByDate[dateKey] = (gamesByDate[dateKey] || 0) + 1;
                             }
 
-                            // Match against the original names (keys of playersData)
-                            // The .toLowerCase() on both sides handles potential case inconsistencies from the sheet
                             const knownWinnerKey = knownPlayerNames.find(p => p.toLowerCase() === winnerName.toLowerCase());
                             if (knownWinnerKey) {
                                 playersData[knownWinnerKey].wins++;
-                            } else if (winnerName) { // If winnerName is not empty but not a known player
+                            } else if (winnerName) { 
                                 console.warn("Unknown player name found in CSV:", winnerName);
                             }
                         }
@@ -395,8 +418,8 @@
                     if (pastGameDates.length > 0) {
                         const lastSessionDateKey = pastGameDates[0];
                         gamesLastSessionElem.textContent = gamesByDate[lastSessionDateKey];
-                        const [year, month, day] = lastSessionDateKey.split('-');
-                        lastSessionDateElem.textContent = `${day}/${month}/${year}`; 
+                        const [yearVal, monthVal, dayVal] = lastSessionDateKey.split('-'); // Renamed to avoid conflict with global vars
+                        lastSessionDateElem.textContent = `${dayVal}/${monthVal}/${yearVal}`; 
                     } else {
                         gamesLastSessionElem.textContent = '0';
                         lastSessionDateElem.textContent = 'N/A';
@@ -429,7 +452,7 @@
 
                     const sortedPlayerNames = [...knownPlayerNames].sort((a,b) => playersData[b].wins - playersData[a].wins);
 
-                    sortedPlayerNames.forEach(playerName => { // playerName here is "Tim", "Andy", or "Matt"
+                    sortedPlayerNames.forEach(playerName => { 
                         const stats = playersData[playerName];
                         const tr = document.createElement('tr');
                         if (leaders.includes(playerName) && stats.wins > 0) {
@@ -445,7 +468,7 @@
 
                         const tdPlayerName = document.createElement('td');
                         tdPlayerName.className = 'player-name'; 
-                        tdPlayerName.textContent = playerName; // Display "Tim", "Andy", or "Matt"
+                        tdPlayerName.textContent = playerName; 
                         
                         const tdWins = document.createElement('td');
                         tdWins.className = 'wins'; 
