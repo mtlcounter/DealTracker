@@ -222,6 +222,10 @@
         }
 
         #stats-table.hidden { display: none; }
+
+        #refresh-sound {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -264,16 +268,18 @@
         <button id="refresh-button">Refresh Scores</button>
 
         <div class="external-links">
-            <a href="https://forms.gle/DEk8WXwVcfqZEQTk6" target="_blank" rel="noopener noreferrer">Record a Win</a>
-            <a href="https://docs.google.com/spreadsheets/d/11IWHaWe49rVfHa6tAxco-A8DB-vfKd5rWwLx41Rvrmc/edit?usp=sharing" target="_blank" rel="noopener noreferrer">View Full Results</a>
+            <a href="https://forms.gle/DEk8WXwVcfqZEQTk6" target="_blank" rel="noopener noreferrer">Record a Win (Form)</a>
+            <a href="https://docs.google.com/spreadsheets/d/11IWHaWe49rVfHa6tAxco-A8DB-vfKd5rWwLx41Rvrmc/edit?usp=sharing" target="_blank" rel="noopener noreferrer">View Full Sheet</a>
         </div>
     </div>
 
+    <audio id="refresh-sound" src="oklg.mp3" preload="auto"></audio>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // !!! IMPORTANT: Replace this URL with your actual published Google Sheet CSV URL !!!
-            const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRBEekFAsEf7j7uM_MwPexOhW0JAX5Gd1aPbfqN2o7Q6gxjI6zh10lAS-dh680u8SuomQlg2QgN6fnc/pub?gid=1534975081&single=true&output=csv';
+            const sheetUrl = 'YOUR_PUBLISHED_CSV_URL_FROM_PUBLIC_SCORES_SHEET_HERE'; // !!! REPLACE THIS !!!
             
+            // --- Reverted playersData to use original names as keys ---
             const playersData = {
                 "Tim": { 
                     wins: 0, losses: 0, 
@@ -288,7 +294,7 @@
                     avatar: "https://images-eds-ssl.xboxlive.com/image?url=wHwbXKif8cus8csoZ03RW8ke8ralOdP9BGd4wzwl0MKiS_22MVIPEwJP9TvepJ8uom_m4YHTAIth1DTzMclZ1sxl6NGrRI89xhmUw8tfnuU_3Qt5_q83QyGSiuSiK1BT2yAuFkwimgZy8TFcNvotd7kvVSa4x_MYqxnOhDIBuFggheSjcOnVvxiMu8_emk50&format=jpg&w=64&h=64"
                 }
             };
-            const knownPlayerNames = Object.keys(playersData);
+            const knownPlayerNames = Object.keys(playersData); // This will now be ["Tim", "Andy", "Matt"]
 
             const leaderTextElem = document.getElementById('leader-text');
             const leaderSectionElem = document.getElementById('leader-section');
@@ -300,7 +306,7 @@
             const gamesThisSeasonElem = document.getElementById('games-this-season');
             const gamesLastSessionElem = document.getElementById('games-last-session');
             const lastSessionDateElem = document.getElementById('last-session-date');
-
+            const refreshSoundEffect = document.getElementById('refresh-sound');
 
             function getLocalDateKey(dateObj) {
                 return dateObj.getFullYear() + '-' + 
@@ -309,7 +315,14 @@
             }
 
             async function fetchAndProcessScores() {
-                if (!sheetUrl || sheetUrl === 'YOUR_PUBLISHED_CSV_URL_FOR_FORM_RESPONSES_1_HERE') {
+                if (refreshSoundEffect) {
+                    refreshSoundEffect.currentTime = 0; 
+                    refreshSoundEffect.play().catch(error => {
+                        console.warn("Audio play failed:", error);
+                    });
+                }
+
+                if (!sheetUrl || sheetUrl === 'YOUR_PUBLISHED_CSV_URL_FROM_PUBLIC_SCORES_SHEET_HERE') {
                     loadingMessageElem.textContent = 'Error: Google Sheet URL not configured in script.js.';
                     leaderTextElem.textContent = 'Configuration Needed';
                     statsTableElem.classList.add('hidden'); 
@@ -339,7 +352,9 @@
                     let totalGamesThisSeason = 0;
                     const gamesByDate = {}; 
 
-                    if (rows.length > 1 || (rows.length === 1 && rows[0].trim() !== "Timestamp,Who Won?" && rows[0].trim() !== "") ) {
+                    // Check if the CSV has more than just the header row ("Timestamp,Who Won?")
+                    // or if it's just one line but not the header (very unlikely for valid data).
+                    if (rows.length > 1 || (rows.length === 1 && rows[0].trim().toLowerCase() !== "timestamp,who won?" && rows[0].trim() !== "") ) {
                         for (let i = 1; i < rows.length; i++) { 
                             if (rows[i].trim() === "") continue; 
                             totalGamesThisSeason++;
@@ -347,7 +362,7 @@
                             if (cells.length < 2) continue; 
 
                             const timestampStr = cells[0].trim();
-                            const winnerName = cells[1].trim();
+                            const winnerName = cells[1].trim(); // This will be "Tim", "Andy", or "Matt"
 
                             const gameDate = new Date(timestampStr);
                             if (!isNaN(gameDate)) { 
@@ -355,9 +370,13 @@
                                 gamesByDate[dateKey] = (gamesByDate[dateKey] || 0) + 1;
                             }
 
-                            const knownWinner = knownPlayerNames.find(p => p.toLowerCase() === winnerName.toLowerCase());
-                            if (knownWinner) {
-                                playersData[knownWinner].wins++;
+                            // Match against the original names (keys of playersData)
+                            // The .toLowerCase() on both sides handles potential case inconsistencies from the sheet
+                            const knownWinnerKey = knownPlayerNames.find(p => p.toLowerCase() === winnerName.toLowerCase());
+                            if (knownWinnerKey) {
+                                playersData[knownWinnerKey].wins++;
+                            } else if (winnerName) { // If winnerName is not empty but not a known player
+                                console.warn("Unknown player name found in CSV:", winnerName);
                             }
                         }
                     }
@@ -410,7 +429,7 @@
 
                     const sortedPlayerNames = [...knownPlayerNames].sort((a,b) => playersData[b].wins - playersData[a].wins);
 
-                    sortedPlayerNames.forEach(playerName => {
+                    sortedPlayerNames.forEach(playerName => { // playerName here is "Tim", "Andy", or "Matt"
                         const stats = playersData[playerName];
                         const tr = document.createElement('tr');
                         if (leaders.includes(playerName) && stats.wins > 0) {
@@ -426,7 +445,7 @@
 
                         const tdPlayerName = document.createElement('td');
                         tdPlayerName.className = 'player-name'; 
-                        tdPlayerName.textContent = playerName;
+                        tdPlayerName.textContent = playerName; // Display "Tim", "Andy", or "Matt"
                         
                         const tdWins = document.createElement('td');
                         tdWins.className = 'wins'; 
