@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow"> 
     <title>Monopoly Deal Score Tracker</title>
+
+    <!-- start Mixpanel -->
+    <script type="text/javascript">
+    (function(f,b){if(!b.__SV){var e,g,i,h;window.mixpanel=b;b._i=[];b.init=function(c,a,d){function k(n,o){var m=o.split(".");2==m.length&&(n=n[m[0]],o=m[1]);n[o]=function(){n.push([o].concat(Array.prototype.slice.call(arguments,0)))}}var l=b;"undefined"!==typeof d?l=b[d]=[]:d="mixpanel";l.people=l.people||[];l.toString=function(n){var o="mixpanel";"mixpanel"!==d&&(o+="."+d);n||(o+=" (stub)");return o};l.people.toString=function(){return l.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");
+    for(h=0;h<i.length;h++)k(l,i[h]);var j="set set_once union unset remove delete".split(" ");l.get_group=function(){function c(a){d[a]=function(){call2_args=arguments;call2=[a].concat(Array.prototype.slice.call(call2_args,0));l.push(call2)}}for(var a=0;a<j.length;a++)c(j[a]);return d};b._i.push([c,a,d])};b.__SV=1.2;e=f.createElement("script");e.type="text/javascript";e.async=!0;e.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?MIXPANEL_CUSTOM_LIB_URL:"https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";g=f.getElementsByTagName("script")[0];g.parentNode.insertBefore(e,g)}})(document,window.mixpanel||[]);
+    mixpanel.init("a52d2af69bc9d113a55d3dd7f6694033"); // Your Mixpanel Project ID
+    </script><!-- end Mixpanel -->
+
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
@@ -273,8 +281,9 @@
         <button id="refresh-button">Refresh Scores</button>
 
         <div class="external-links">
-            <a href="https://forms.gle/DEk8WXwVcfqZEQTk6" target="_blank" rel="noopener noreferrer">Record a Win</a>
-            <a href="https://docs.google.com/spreadsheets/d/11IWHaWe49rVfHa6tAxco-A8DB-vfKd5rWwLx41Rvrmc/edit?usp=sharing" target="_blank" rel="noopener noreferrer">View Full Scoresheet</a>
+            <!-- Added IDs for Mixpanel tracking -->
+            <a id="record-win-link" href="https://forms.gle/DEk8WXwVcfqZEQTk6" target="_blank" rel="noopener noreferrer">Record a Win</a>
+            <a id="view-sheet-link" href="https://docs.google.com/spreadsheets/d/11IWHaWe49rVfHa6tAxco-A8DB-vfKd5rWwLx41Rvrmc/edit?usp=sharing" target="_blank" rel="noopener noreferrer">View Full Scoresheet</a>
         </div>
     </div>
 
@@ -282,10 +291,15 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Ensure this URL is correct and points to your PublicScores sheet CSV
+            // --- Mixpanel: Track Page View ---
+            mixpanel.track("Page view", {
+                "Page Name": "Deal", // Or "Deal Tracker" if mtlc.xyz/dealtracker
+                "Referrer URL Path": document.referrer || "Direct/Unknown"
+            });
+            // --- End Mixpanel ---
+
             const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRBEekFAsEf7j7uM_MwPexOhW0JAX5Gd1aPbfqN2o7Q6gxjI6zh10lAS-dh680u8SuomQlg2QgN6fnc/pub?gid=1534975081&single=true&output=csv'; 
             
-            // playersData uses REAL names as keys, matching the CSV "Who Won?" column
             const playersData = {
                 "Tim": { 
                     wins: 0, losses: 0, 
@@ -300,15 +314,10 @@
                     avatar: "https://images-eds-ssl.xboxlive.com/image?url=wHwbXKif8cus8csoZ03RW8ke8ralOdP9BGd4wzwl0MKiS_22MVIPEwJP9TvepJ8uom_m4YHTAIth1DTzMclZ1sxl6NGrRI89xhmUw8tfnuU_3Qt5_q83QyGSiuSiK1BT2yAuFkwimgZy8TFcNvotd7kvVSa4x_MYqxnOhDIBuFggheSjcOnVvxiMu8_emk50&format=jpg&w=64&h=64"
                 }
             };
-            // --- NEW MAPPING FOR DISPLAY NAMES (GAMERTAGS) ---
-            const displayNamesMap = {
-                "Tim": "Tim",
-                "Andy": "Andy",
-                "Matt": "Matt"
-            };
-            // --- END NEW MAPPING ---
-
-            const knownPlayerNames = Object.keys(playersData); // Still ["Tim", "Andy", "Matt"]
+            
+            // Removed the displayNamesMap and useDisplayNames flag as depersonalization is not active
+            
+            const knownPlayerNames = Object.keys(playersData);
 
             const leaderTextElem = document.getElementById('leader-text');
             const leaderSectionElem = document.getElementById('leader-section');
@@ -321,6 +330,10 @@
             const gamesLastSessionElem = document.getElementById('games-last-session');
             const lastSessionDateElem = document.getElementById('last-session-date');
             const refreshSoundEffect = document.getElementById('refresh-sound');
+            
+            const recordWinLink = document.getElementById('record-win-link');
+            const viewSheetLink = document.getElementById('view-sheet-link');
+
 
             function getLocalDateKey(dateObj) {
                 return dateObj.getFullYear() + '-' + 
@@ -344,14 +357,13 @@
                 }
 
                 loadingMessageElem.textContent = 'Fetching latest scores...';
-                // ... (rest of the initial UI reset logic)
                 loadingMessageElem.style.display = 'block';
                 statsTableElem.classList.add('hidden');
                 statsBodyElem.innerHTML = '';
                 leaderTextElem.textContent = 'Calculating...';
                 leaderSectionElem.className = '';
 
-                knownPlayerNames.forEach(name => { // name is "Tim", "Andy", or "Matt"
+                knownPlayerNames.forEach(name => {
                     playersData[name].wins = 0;
                     playersData[name].losses = 0;
                 });
@@ -374,10 +386,9 @@
                             if (cells.length < 2) continue; 
 
                             const timestampStr = cells[0].trim();
-                            const winnerNameFromCsv = cells[1].trim(); // This is "Tim", "Andy", or "Matt"
+                            const winnerNameFromCsv = cells[1].trim(); 
 
                             let gameDate;
-                            // ... (date parsing logic - kept from previous version)
                             const dateTimeParts = timestampStr.split(' '); 
                             const dateParts = dateTimeParts[0].split('/'); 
                             if (dateParts.length === 3) {
@@ -397,14 +408,12 @@
                                 console.warn("Unexpected date format in CSV:", timestampStr);
                                 gameDate = new Date(timestampStr); 
                             }
-                            // ... (end date parsing)
 
                             if (!isNaN(gameDate)) { 
                                 const dateKey = getLocalDateKey(gameDate);
                                 gamesByDate[dateKey] = (gamesByDate[dateKey] || 0) + 1;
                             }
 
-                            // Find the key in playersData (e.g., "Tim") that matches winnerNameFromCsv
                             const internalPlayerKey = knownPlayerNames.find(p => p.toLowerCase() === winnerNameFromCsv.toLowerCase());
                             if (internalPlayerKey) {
                                 playersData[internalPlayerKey].wins++;
@@ -414,12 +423,11 @@
                         }
                     }
                     
-                    knownPlayerNames.forEach(p => { // p is "Tim", "Andy", or "Matt"
+                    knownPlayerNames.forEach(p => { 
                         playersData[p].losses = totalGamesThisSeason - playersData[p].wins;
                     });
 
                     gamesThisSeasonElem.textContent = totalGamesThisSeason;
-                    // ... (last session date logic - kept from previous version)
                     const todayKey = getLocalDateKey(new Date());
                     const pastGameDates = Object.keys(gamesByDate)
                         .filter(dateKey => dateKey !== todayKey)
@@ -433,13 +441,11 @@
                         gamesLastSessionElem.textContent = '0';
                         lastSessionDateElem.textContent = 'N/A';
                     }
-                    // ... (end last session date)
-
 
                     let maxWins = -1;
-                    let leaders = []; // Will contain "Tim", "Andy", or "Matt"
+                    let leaders = []; 
                     if (totalGamesThisSeason > 0) {
-                        knownPlayerNames.forEach(p_internal => { // p_internal is "Tim", "Andy", or "Matt"
+                        knownPlayerNames.forEach(p_internal => { 
                             if (playersData[p_internal].wins > maxWins) {
                                 maxWins = playersData[p_internal].wins;
                                 leaders = [p_internal];
@@ -450,28 +456,23 @@
                          if (maxWins === 0) leaders = [];
                     }
 
-                    // --- MODIFIED LEADER DISPLAY ---
+                    // Display logic uses real names directly now
                     if (totalGamesThisSeason === 0) {
                         leaderTextElem.textContent = "No games played this season!";
                     } else if (leaders.length === 1) {
-                        const displayLeaderName = displayNamesMap[leaders[0]] || leaders[0]; // Use gamertag if exists
-                        leaderTextElem.innerHTML = `<span class="leader-name">${displayLeaderName}</span> is leading! 🏆`;
+                        leaderTextElem.innerHTML = `<span class="leader-name">${leaders[0]}</span> is leading! 🏆`;
                     } else if (leaders.length > 1) {
-                        const displayLeaderNames = leaders.map(l => displayNamesMap[l] || l).join(' & '); // Use gamertags
-                        leaderTextElem.innerHTML = `Tie: <span class="leader-name">${displayLeaderNames}</span> 👑`;
+                        leaderTextElem.innerHTML = `Tie: <span class="leader-name">${leaders.join(' & ')}</span> 👑`;
                         leaderSectionElem.classList.add('tie');
                     } else { 
                          leaderTextElem.textContent = "Waiting for a clear winner...";
                     }
-                    // --- END MODIFIED LEADER DISPLAY ---
 
-
-                    // Sort by wins, using internal player keys ("Tim", "Andy", "Matt")
                     const sortedInternalPlayerNames = [...knownPlayerNames].sort((a,b) => playersData[b].wins - playersData[a].wins);
 
-                    sortedInternalPlayerNames.forEach(internalPlayerName => { // internalPlayerName is "Tim", "Andy", or "Matt"
+                    sortedInternalPlayerNames.forEach(internalPlayerName => { 
                         const stats = playersData[internalPlayerName];
-                        const displayName = displayNamesMap[internalPlayerName] || internalPlayerName; // Get gamertag for display
+                        // const nameForDisplay = displayNamesMap[internalPlayerName] || internalPlayerName; // Not needed if displayNamesMap maps to self
 
                         const tr = document.createElement('tr');
                         if (leaders.includes(internalPlayerName) && stats.wins > 0) {
@@ -483,12 +484,11 @@
                         if (leaders.includes(internalPlayerName) && stats.wins > 0) {
                             tdAvatar.classList.add('leader-avatar');
                         }
-                        // Use actual avatar URL, alt text can be the display name
-                        tdAvatar.innerHTML = `<img src="${stats.avatar}" alt="${displayName}">`; 
+                        tdAvatar.innerHTML = `<img src="${stats.avatar}" alt="${internalPlayerName}">`; 
 
                         const tdPlayerName = document.createElement('td');
                         tdPlayerName.className = 'player-name'; 
-                        tdPlayerName.textContent = displayName; // Display the gamertag
+                        tdPlayerName.textContent = internalPlayerName; 
                         
                         const tdWins = document.createElement('td');
                         tdWins.className = 'wins'; 
@@ -519,8 +519,25 @@
                 }
             }
             
-            refreshButton.addEventListener('click', fetchAndProcessScores);
-            fetchAndProcessScores(); 
+            // Add Mixpanel event tracking to button and links
+            refreshButton.addEventListener('click', function() {
+                mixpanel.track("Refresh Score");
+                fetchAndProcessScores();
+            });
+
+            if(recordWinLink) {
+                recordWinLink.addEventListener('click', function() {
+                    mixpanel.track("Record a Win");
+                });
+            }
+            if(viewSheetLink) {
+                viewSheetLink.addEventListener('click', function() {
+                    mixpanel.track("View Full Scoresheet");
+                });
+            }
+            // End Mixpanel event tracking
+
+            fetchAndProcessScores(); // Initial load
         });
     </script>
 </body>
