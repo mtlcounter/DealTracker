@@ -10,7 +10,7 @@
     <script type="text/javascript">
     (function(f,b){if(!b.__SV){var e,g,i,h;window.mixpanel=b;b._i=[];b.init=function(c,a,d){function k(n,o){var m=o.split(".");2==m.length&&(n=n[m[0]],o=m[1]);n[o]=function(){n.push([o].concat(Array.prototype.slice.call(arguments,0)))}}var l=b;"undefined"!==typeof d?l=b[d]=[]:d="mixpanel";l.people=l.people||[];l.toString=function(n){var o="mixpanel";"mixpanel"!==d&&(o+="."+d);n||(o+=" (stub)");return o};l.people.toString=function(){return l.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");
     for(h=0;h<i.length;h++)k(l,i[h]);var j="set set_once union unset remove delete".split(" ");l.get_group=function(){function c(a){d[a]=function(){call2_args=arguments;call2=[a].concat(Array.prototype.slice.call(call2_args,0));l.push(call2)}}for(var a=0;a<j.length;a++)c(j[a]);return d};b._i.push([c,a,d])};b.__SV=1.2;e=f.createElement("script");e.type="text/javascript";e.async=!0;e.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?MIXPANEL_CUSTOM_LIB_URL:"https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";g=f.getElementsByTagName("script")[0];g.parentNode.insertBefore(e,g)}})(document,window.mixpanel||[]);
-    mixpanel.init("a52d2af69bc9d113a55d3dd7f6694033"); // Your Mixpanel Project ID
+    mixpanel.init("a52d2af69bc9d113a55d3dd7f6694033");
     </script><!-- end Mixpanel -->
 
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
@@ -236,7 +236,8 @@
 
         #stats-table.hidden { display: none; }
 
-        #refresh-sound {
+        /* Hide the audio elements visually */
+        .refresh-sound-effect { 
             display: none;
         }
     </style>
@@ -281,22 +282,24 @@
         <button id="refresh-button">Refresh Scores</button>
 
         <div class="external-links">
-            <!-- Added IDs for Mixpanel tracking -->
             <a id="record-win-link" href="https://forms.gle/DEk8WXwVcfqZEQTk6" target="_blank" rel="noopener noreferrer">Record a Win</a>
             <a id="view-sheet-link" href="https://docs.google.com/spreadsheets/d/11IWHaWe49rVfHa6tAxco-A8DB-vfKd5rWwLx41Rvrmc/edit?usp=sharing" target="_blank" rel="noopener noreferrer">View Full Scoresheet</a>
         </div>
     </div>
 
-    <audio id="refresh-sound" src="assets/oklg.mp3" preload="auto"></audio>
+    <!-- ADD THE AUDIO ELEMENTS HERE -->
+    <audio id="sfx-oklg" class="refresh-sound-effect" src="assets/oklg.mp3" preload="auto"></audio>
+    <audio id="sfx-okcmpt" class="refresh-sound-effect" src="assets/okcmpt.mp3" preload="auto"></audio>
+    <audio id="sfx-babybaby" class="refresh-sound-effect" src="assets/babybaby.mp3" preload="auto"></audio>
+    <audio id="sfx-eee" class="refresh-sound-effect" src="assets/eee.mp3" preload="auto"></audio>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Mixpanel: Track Page View ---
             mixpanel.track("Page view", {
                 "Page Name": "Deal", // Or "Deal Tracker" if mtlc.xyz/dealtracker
                 "Referrer URL Path": document.referrer || "Direct/Unknown"
             });
-            // --- End Mixpanel ---
 
             const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRBEekFAsEf7j7uM_MwPexOhW0JAX5Gd1aPbfqN2o7Q6gxjI6zh10lAS-dh680u8SuomQlg2QgN6fnc/pub?gid=1534975081&single=true&output=csv'; 
             
@@ -315,8 +318,6 @@
                 }
             };
             
-            // Removed the displayNamesMap and useDisplayNames flag as depersonalization is not active
-            
             const knownPlayerNames = Object.keys(playersData);
 
             const leaderTextElem = document.getElementById('leader-text');
@@ -329,7 +330,10 @@
             const gamesThisSeasonElem = document.getElementById('games-this-season');
             const gamesLastSessionElem = document.getElementById('games-last-session');
             const lastSessionDateElem = document.getElementById('last-session-date');
-            const refreshSoundEffect = document.getElementById('refresh-sound');
+            
+            // --- MODIFIED FOR RANDOM SOUNDS ---
+            const soundEffectIds = ["sfx-oklg", "sfx-okcmpt", "sfx-babybaby", "sfx-eee"];
+            // --- END MODIFICATION ---
             
             const recordWinLink = document.getElementById('record-win-link');
             const viewSheetLink = document.getElementById('view-sheet-link');
@@ -342,12 +346,19 @@
             }
 
             async function fetchAndProcessScores() {
-                if (refreshSoundEffect) {
-                    refreshSoundEffect.currentTime = 0; 
-                    refreshSoundEffect.play().catch(error => {
-                        console.warn("Audio play failed:", error);
-                    });
+                // --- MODIFIED FOR RANDOM SOUNDS ---
+                if (soundEffectIds.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * soundEffectIds.length);
+                    const randomSoundId = soundEffectIds[randomIndex];
+                    const soundEffectToPlay = document.getElementById(randomSoundId);
+                    if (soundEffectToPlay) {
+                        soundEffectToPlay.currentTime = 0; 
+                        soundEffectToPlay.play().catch(error => {
+                            console.warn("Audio play failed for " + randomSoundId + ":", error);
+                        });
+                    }
                 }
+                // --- END MODIFICATION ---
                 
                 if (!sheetUrl || sheetUrl === 'YOUR_PUBLISHED_CSV_URL_FROM_PUBLIC_SCORES_SHEET_HERE') {
                     loadingMessageElem.textContent = 'Error: Google Sheet URL not configured in script.js.';
@@ -456,7 +467,6 @@
                          if (maxWins === 0) leaders = [];
                     }
 
-                    // Display logic uses real names directly now
                     if (totalGamesThisSeason === 0) {
                         leaderTextElem.textContent = "No games played this season!";
                     } else if (leaders.length === 1) {
@@ -472,8 +482,6 @@
 
                     sortedInternalPlayerNames.forEach(internalPlayerName => { 
                         const stats = playersData[internalPlayerName];
-                        // const nameForDisplay = displayNamesMap[internalPlayerName] || internalPlayerName; // Not needed if displayNamesMap maps to self
-
                         const tr = document.createElement('tr');
                         if (leaders.includes(internalPlayerName) && stats.wins > 0) {
                             tr.classList.add('leader');
@@ -519,7 +527,6 @@
                 }
             }
             
-            // Add Mixpanel event tracking to button and links
             refreshButton.addEventListener('click', function() {
                 mixpanel.track("Refresh Score");
                 fetchAndProcessScores();
@@ -535,9 +542,8 @@
                     mixpanel.track("View Full Scoresheet");
                 });
             }
-            // End Mixpanel event tracking
 
-            fetchAndProcessScores(); // Initial load
+            fetchAndProcessScores(); 
         });
     </script>
 </body>
