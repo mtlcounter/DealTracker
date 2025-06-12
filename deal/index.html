@@ -216,6 +216,34 @@
         button#refresh-button:active {
             transform: translateY(1px);
         }
+        
+        /* --- NEW STYLES FOR SFX BUTTONS --- */
+        .sfx-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .sfx-button {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            font-size: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sfx-button:hover {
+            background-color: var(--border-light);
+            color: var(--text-primary);
+        }
+        /* --- END NEW STYLES --- */
 
         .external-links {
             margin-top: 10px; 
@@ -281,13 +309,22 @@
         <p class="last-updated">Last updated: <span id="last-updated-time">Never</span></p>
         <button id="refresh-button">Refresh Scores</button>
 
+        <!-- --- NEW SFX BUTTONS --- -->
+        <div class="sfx-controls">
+            <button class="sfx-button" data-sfx="sfx-oklg">▶️ OKLG</button>
+            <button class="sfx-button" data-sfx="sfx-okcmpt">▶️ OK CMPT</button>
+            <button class="sfx-button" data-sfx="sfx-babybaby">▶️ Baby Baby</button>
+            <button class="sfx-button" data-sfx="sfx-eee">▶️ EEE</button>
+        </div>
+        <!-- --- END NEW SFX BUTTONS --- -->
+
         <div class="external-links">
             <a id="record-win-link" href="https://forms.gle/DEk8WXwVcfqZEQTk6" target="_blank" rel="noopener noreferrer">Record a Win</a>
             <a id="view-sheet-link" href="https://docs.google.com/spreadsheets/d/11IWHaWe49rVfHa6tAxco-A8DB-vfKd5rWwLx41Rvrmc/edit?usp=sharing" target="_blank" rel="noopener noreferrer">View Full Scoresheet</a>
         </div>
     </div>
 
-    <!-- ADD THE AUDIO ELEMENTS HERE -->
+    <!-- AUDIO ELEMENTS -->
     <audio id="sfx-oklg" class="refresh-sound-effect" src="assets/oklg.mp3" preload="auto"></audio>
     <audio id="sfx-okcmpt" class="refresh-sound-effect" src="assets/okcmpt.mp3" preload="auto"></audio>
     <audio id="sfx-babybaby" class="refresh-sound-effect" src="assets/babybaby.mp3" preload="auto"></audio>
@@ -330,11 +367,6 @@
             const gamesThisSeasonElem = document.getElementById('games-this-season');
             const gamesLastSessionElem = document.getElementById('games-last-session');
             const lastSessionDateElem = document.getElementById('last-session-date');
-            
-            // --- MODIFIED FOR RANDOM SOUNDS ---
-            const soundEffectIds = ["sfx-oklg", "sfx-okcmpt", "sfx-babybaby", "sfx-eee"];
-            // --- END MODIFICATION ---
-            
             const recordWinLink = document.getElementById('record-win-link');
             const viewSheetLink = document.getElementById('view-sheet-link');
 
@@ -346,17 +378,13 @@
             }
 
             async function fetchAndProcessScores() {
-                // --- MODIFIED FOR RANDOM SOUNDS ---
-                if (soundEffectIds.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * soundEffectIds.length);
-                    const randomSoundId = soundEffectIds[randomIndex];
-                    const soundEffectToPlay = document.getElementById(randomSoundId);
-                    if (soundEffectToPlay) {
-                        soundEffectToPlay.currentTime = 0; 
-                        soundEffectToPlay.play().catch(error => {
-                            console.warn("Audio play failed for " + randomSoundId + ":", error);
-                        });
-                    }
+                // --- Play specific sound on refresh ---
+                const soundEffectToPlay = document.getElementById('sfx-oklg');
+                if (soundEffectToPlay) {
+                    soundEffectToPlay.currentTime = 0;
+                    soundEffectToPlay.play().catch(error => {
+                        console.warn("Audio play failed for sfx-oklg:", error);
+                    });
                 }
                 // --- END MODIFICATION ---
                 
@@ -531,6 +559,21 @@
                 mixpanel.track("Refresh Score");
                 fetchAndProcessScores();
             });
+
+            // --- NEW: Event listeners for manual SFX buttons ---
+            const sfxButtons = document.querySelectorAll('.sfx-button');
+            sfxButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const sfxId = this.dataset.sfx;
+                    const soundToPlay = document.getElementById(sfxId);
+                    if (soundToPlay) {
+                        soundToPlay.currentTime = 0;
+                        soundToPlay.play().catch(error => console.warn("Audio play failed: ", error));
+                        mixpanel.track("SFX Button Clicked", {"Sound": sfxId});
+                    }
+                });
+            });
+            // --- END NEW SCRIPT ---
 
             if(recordWinLink) {
                 recordWinLink.addEventListener('click', function() {
