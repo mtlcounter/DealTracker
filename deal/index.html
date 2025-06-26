@@ -217,7 +217,7 @@
             transform: translateY(1px);
         }
         
-        /* --- NEW STYLES FOR SFX BUTTONS --- */
+        /* --- STYLES FOR SFX BUTTONS --- */
         .sfx-controls {
             display: flex;
             flex-wrap: wrap;
@@ -230,20 +230,21 @@
             background-color: var(--bg-card);
             border: 1px solid var(--border-light);
             color: var(--text-secondary);
-            padding: 6px 12px;
-            font-size: 12px;
+            padding: 8px 12px;
+            font-size: 22px; /* Increased font size for emojis */
             font-family: 'Poppins', sans-serif;
             font-weight: 500;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
+            line-height: 1; /* Helps center single-character emojis */
         }
 
         .sfx-button:hover {
             background-color: var(--border-light);
             color: var(--text-primary);
         }
-        /* --- END NEW STYLES --- */
+        /* --- END SFX STYLES --- */
 
         .external-links {
             margin-top: 10px; 
@@ -309,14 +310,15 @@
         <p class="last-updated">Last updated: <span id="last-updated-time">Never</span></p>
         <button id="refresh-button">Refresh Scores</button>
 
-        <!-- --- NEW SFX BUTTONS --- -->
+        <!-- --- SFX BUTTONS --- -->
         <div class="sfx-controls">
-            <button class="sfx-button" data-sfx="sfx-oklg">▶️ OKLG</button>
-            <button class="sfx-button" data-sfx="sfx-okcmpt">▶️ OK CMPT</button>
-            <button class="sfx-button" data-sfx="sfx-babybaby">▶️ Baby Baby</button>
-            <button class="sfx-button" data-sfx="sfx-eee">▶️ EEE</button>
+            <button class="sfx-button" data-sfx="sfx-oklg">🆗👉🏼</button>
+            <button class="sfx-button" data-sfx="sfx-okcmpt">🎢</button>
+            <button class="sfx-button" data-sfx="sfx-babybaby">🥳</button>
+            <button class="sfx-button" data-sfx="sfx-eee">🗿</button>
+            <button class="sfx-button" data-sfx="sfx-hheyyy">👋🏼</button>
         </div>
-        <!-- --- END NEW SFX BUTTONS --- -->
+        <!-- --- END SFX BUTTONS --- -->
 
         <div class="external-links">
             <a id="record-win-link" href="https://forms.gle/DEk8WXwVcfqZEQTk6" target="_blank" rel="noopener noreferrer">Record a Win</a>
@@ -325,6 +327,8 @@
     </div>
 
     <!-- AUDIO ELEMENTS -->
+    <audio id="sfx-leroy" class="refresh-sound-effect" src="assets/leroy.mp3" preload="auto"></audio>
+    <audio id="sfx-hheyy" class="refresh-sound-effect" src="assets/hheyy.mp3" preload="auto"></audio>
     <audio id="sfx-oklg" class="refresh-sound-effect" src="assets/oklg.mp3" preload="auto"></audio>
     <audio id="sfx-okcmpt" class="refresh-sound-effect" src="assets/okcmpt.mp3" preload="auto"></audio>
     <audio id="sfx-babybaby" class="refresh-sound-effect" src="assets/babybaby.mp3" preload="auto"></audio>
@@ -379,11 +383,11 @@
 
             async function fetchAndProcessScores() {
                 // --- Play specific sound on refresh ---
-                const soundEffectToPlay = document.getElementById('sfx-oklg');
+                const soundEffectToPlay = document.getElementById('sfx-leroy');
                 if (soundEffectToPlay) {
                     soundEffectToPlay.currentTime = 0;
                     soundEffectToPlay.play().catch(error => {
-                        console.warn("Audio play failed for sfx-oklg:", error);
+                        console.warn("Audio play failed for sfx-leroy:", error);
                     });
                 }
                 // --- END MODIFICATION ---
@@ -560,7 +564,7 @@
                 fetchAndProcessScores();
             });
 
-            // --- NEW: Event listeners for manual SFX buttons ---
+            // --- Event listeners for manual SFX buttons ---
             const sfxButtons = document.querySelectorAll('.sfx-button');
             sfxButtons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -573,7 +577,7 @@
                     }
                 });
             });
-            // --- END NEW SCRIPT ---
+            // --- END SFX SCRIPT ---
 
             if(recordWinLink) {
                 recordWinLink.addEventListener('click', function() {
