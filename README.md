@@ -50,17 +50,6 @@ const playersData = {
 ### Google Sheets Integration
 The app connects to Google Sheets via a published CSV.
 
-## File Structure
-
-```
-├── index.html              # Main application
-├── assets/
-│   ├── *.mp3              # Sound effect files
-│   ├── favicon files      # Site icons
-│   └── site.webmanifest   # PWA manifest
-└── README.md              # This file
-```
-
 ## Features Deep Dive
 
 ### Score Calculation
